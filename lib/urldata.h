@@ -198,6 +198,11 @@
 #include <libssh2_sftp.h>
 #endif /* HAVE_LIBSSH2_H */
 
+#ifndef MPTCP_GET_SUB_IDS
+#include <linux/tcp.h> /* check whether the MPTCP API is available */
+#endif
+
+
 /* Download buffer size, keep it fairly big for speed reasons */
 #undef BUFSIZE
 #define BUFSIZE CURL_MAX_WRITE_SIZE
@@ -1142,6 +1147,10 @@ struct PureInfo {
   struct curl_certinfo certs; /* info about the certs, only populated in
                                  OpenSSL builds. Asked for with
                                  CURLOPT_CERTINFO / CURLINFO_CERTINFO */
+#ifdef MPTCP_GET_SUB_IDS
+  long transferred_bytes; /* helps the decision to open more subflows */
+#endif
+
 };
 
 

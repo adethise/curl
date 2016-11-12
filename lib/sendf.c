@@ -24,6 +24,7 @@
 
 #ifndef MPTCP_GET_SUB_IDS // TODO switch to HAVE_xx
 #include <linux/tcp.h>
+#include <ifaddrs.h>
 #endif
 
 #include <curl/curl.h>
@@ -429,6 +430,7 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
   nread = sread(sockfd, buf, len);
 #ifdef MPTCP_GET_SUB_IDS
   /* adapt subflow number to content length */
+  conn->transferred_bytes += nread;
   unsigned int optlen;
   struct mptcp_sub_ids *ids;
 
@@ -438,11 +440,50 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
   if(ret)
     perror("ERROR: MPTCP: ");
 
+  // TODO remove these files when dev done
   FILE *file = fopen("/home/mininet/mptcp_subcount", "w");
-
   fprintf(file, "%d\n", ids->sub_count);
-
   fclose(file);
+
+  if(conn->transferred_bytes > 16384*ids->sub_count) {
+    struct ifaddrs *myaddrs, *ifa;
+    ret = getifaddrs(&local_addr);
+    if(ret) // TODO change the error code
+      perror("getifaddrs returned: %d", ret);
+
+    for(ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+      if(addr->sa_family == AF_INET) {
+        sockaddr_in addr = (sockaddr_in) ifa->ifa_addr;
+        struct in_addr localhost;
+        inet_pton(AF_INET, "127.0.0.1", &localhost);
+        if(memcmp(addr->sin6_addr, linklocal, 4)) {
+          printf("Found localhost addr\n");
+        }
+        else {
+          unsigned char straddr[64];
+          inet_ntop(AF_INET, addr->sin_addr, straddr, 64);
+          printf("Found candidate addr: %s\n", straddr);
+        }
+      }
+      else if(addr->sa_family == AF_INET6) {
+        sockaddr_in6 addr6 = (sockaddr_in6) ifa->ifa_addr;
+        struct in6_addr linklocal, localhost;
+        inet_pton(AF_INET6, "fe80::", &linklocal);
+        inet_pton(AF_INET6, "::1", &localhost);
+        if(memcmp(addr6->sin6_addr, linklocal, 2)) {
+          printf("Found link-local addr\n");
+        }
+        else if(memcmp(addr6->sin6_addr, localhost, 16)) {
+          printf("Found localhost addr\n");
+        }
+        else {
+          unsigned char straddr[64];
+          inet_ntop(AF_INET6, addr6->sin6_addr, straddr, 64);
+          printf("Found candidate addr: %s\n", straddr);
+        }
+      }
+    }
+  }
 #endif
 
   *code = CURLE_OK;
