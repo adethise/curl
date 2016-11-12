@@ -40,6 +40,9 @@
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
+#ifndef MPTCP_GET_SUB_IDS
+#include <linux/tcp.h>
+#endif
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -3489,6 +3492,19 @@ CURLcode Curl_http_readwrite_headers(struct Curl_easy *data,
            just to make it easier for apps/callbacks to extract this
            info as soon as possible */
         Curl_pgrsSetDownloadSize(data, k->size);
+
+#ifdef MPTCP_GET_SUB_IDS
+        /* adapt subflow number to content length */
+        unsigned int optlen;
+        struct mptcp_sub_ids *ids;
+
+        optlen = 42;
+        ids = malloc(optlen);
+        getsockopt(sockfd, IPPROTO_TCP, MPTCP_GET_SUB_IDS, ids, &optlen);
+        FILE file = fopen("/home/mininet/mptcp_subcount", "w");
+        fwrite(file, "%d\n", ids->sub_count);
+        fclose(file);
+#endif
       }
       else {
         /* Negative Content-Length is really odd, and we know it
