@@ -24,6 +24,12 @@
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+
+// #ifdef HAVE_MPTCP_CONTROL
+#include <linux/tcp.h>
+#include <ifaddrs.h>
+// #endif
+
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
@@ -3961,7 +3967,7 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
   conn->max_subflows = 0;
 
   struct ifaddrs *myaddrs, *ifa;
-  ret = getifaddrs(&myaddrs);
+  int ret = getifaddrs(&myaddrs);
   if(ret)
     perror("getifaddrs");
 
@@ -3974,6 +3980,7 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
         conn->max_subflows++;
       }
       // TODO add AF_INET6 family support for mptcp
+    }
   }
 #endif
   return conn;
