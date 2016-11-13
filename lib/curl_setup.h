@@ -763,5 +763,6 @@ endings either CRLF or LF so 't' is appropriate.
 # endif
 
 #define HAVE_MPTCP_CONTROL 1
+#define MPTCP_DATA_THRESH 65536
 
 #endif /* HEADER_CURL_SETUP_H */

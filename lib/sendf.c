@@ -444,9 +444,7 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
     perror("MPTCP_GET_SUB_IDS");
 
   if(ids->sub_count < conn->max_subflows &&
-      conn->transferred_bytes > 16384*ids->sub_count) { // TODO better decision
-    fprintf(stderr, "Deciding to add more subflows (bytes:%d, subflows: %d)\n",
-            conn->transferred_bytes, ids->sub_count);
+      conn->transferred_bytes > MPTCP_DATA_THRESH * ids->sub_count) {
     struct ifaddrs *myaddrs, *ifa;
     ret = getifaddrs(&myaddrs);
     if(ret)
@@ -487,8 +485,7 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
 
           error = getsockopt(sockfd, IPPROTO_TCP, MPTCP_OPEN_SUB_TUPLE,
                              sub_tuple, &optlen);
-          if(error)
-            perror("MPTCP_OPEN_SUB_TUPLE");
+          // if this address is already in use, fail silently
         }
       }
       /*else if(ifa->ifa_addr->sa_family == AF_INET6) {
