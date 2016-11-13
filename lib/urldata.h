@@ -1104,6 +1104,10 @@ struct connectdata {
   struct connectbundle *bundle; /* The bundle we are member of */
 
   int negnpn; /* APLN or NPN TLS negotiated protocol, CURL_HTTP_VERSION* */
+
+#ifdef MPTCP_GET_SUB_IDS
+  long transferred_bytes; /* helps the decision to open more subflows */
+#endif
 };
 
 /* The end of connectdata. */
@@ -1147,10 +1151,6 @@ struct PureInfo {
   struct curl_certinfo certs; /* info about the certs, only populated in
                                  OpenSSL builds. Asked for with
                                  CURLOPT_CERTINFO / CURLINFO_CERTINFO */
-#ifdef MPTCP_GET_SUB_IDS
-  long transferred_bytes; /* helps the decision to open more subflows */
-#endif
-
 };
 
 

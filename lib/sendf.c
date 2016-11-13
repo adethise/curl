@@ -26,6 +26,8 @@
 #include <linux/tcp.h>
 #include <ifaddrs.h>
 #endif
+// should be ifdef HAVE_MPTCP
+#include <netinet/in.h>
 
 #include <curl/curl.h>
 
@@ -445,40 +447,40 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
   fprintf(file, "%d\n", ids->sub_count);
   fclose(file);
 
-  if(conn->transferred_bytes > 16384*ids->sub_count) {
+  if(conn->transferred_bytes > 16384*ids->sub_count) { // TODO better decision
     struct ifaddrs *myaddrs, *ifa;
-    ret = getifaddrs(&local_addr);
-    if(ret) // TODO change the error code
-      perror("getifaddrs returned: %d", ret);
+    ret = getifaddrs(&myaddrs);
+    if(ret) // TODO better error management
+      perror("ERROR:getifaddrs");
 
     for(ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next) {
-      if(addr->sa_family == AF_INET) {
-        sockaddr_in addr = (sockaddr_in) ifa->ifa_addr;
+      if(ifa->ifa_addr->sa_family == AF_INET) {
+        struct sockaddr_in *addr = (struct sockaddr_in *)ifa->ifa_addr;
         struct in_addr localhost;
         inet_pton(AF_INET, "127.0.0.1", &localhost);
-        if(memcmp(addr->sin6_addr, linklocal, 4)) {
+        if(memcmp(&(addr->sin_addr), &localhost, 4) == 0) {
           printf("Found localhost addr\n");
         }
-        else {
+        else { // candidate address
           unsigned char straddr[64];
-          inet_ntop(AF_INET, addr->sin_addr, straddr, 64);
+          inet_ntop(AF_INET, &(addr->sin_addr), &straddr, 64);
           printf("Found candidate addr: %s\n", straddr);
         }
       }
-      else if(addr->sa_family == AF_INET6) {
-        sockaddr_in6 addr6 = (sockaddr_in6) ifa->ifa_addr;
+      else if(ifa->ifa_addr->sa_family == AF_INET6) {
+        struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)ifa->ifa_addr;
         struct in6_addr linklocal, localhost;
         inet_pton(AF_INET6, "fe80::", &linklocal);
         inet_pton(AF_INET6, "::1", &localhost);
-        if(memcmp(addr6->sin6_addr, linklocal, 2)) {
+        if(memcmp(&(addr6->sin6_addr), &linklocal, 2) == 0) {
           printf("Found link-local addr\n");
         }
-        else if(memcmp(addr6->sin6_addr, localhost, 16)) {
+        else if(memcmp(&(addr6->sin6_addr), &localhost, 16) == 0) {
           printf("Found localhost addr\n");
         }
-        else {
+        else { // candidate address
           unsigned char straddr[64];
-          inet_ntop(AF_INET6, addr6->sin6_addr, straddr, 64);
+          inet_ntop(AF_INET6, &(addr6->sin6_addr), &straddr, 64);
           printf("Found candidate addr: %s\n", straddr);
         }
       }
