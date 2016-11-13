@@ -458,55 +458,56 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
         inet_pton(AF_INET, "127.0.0.1", &localhost);
         if(memcmp(&addr->sin_addr, &localhost, 4) != 0) {
 
-    	  unsigned int optlen;
-    	  struct mptcp_sub_tuple *sub_tuple;
-    	  struct sockaddr_in *addr_ptr;
+      	  unsigned int optlen;
+      	  struct mptcp_sub_tuple *sub_tuple;
+      	  struct sockaddr_in *addr_ptr;
 
-    	  int error;
+      	  int error;
 
-    	  optlen = sizeof(struct mptcp_sub_tuple) +
-    		   2 * sizeof(struct sockaddr_in);
-    	  sub_tuple = malloc(optlen);
+      	  optlen = sizeof(struct mptcp_sub_tuple) +
+      		   2 * sizeof(struct sockaddr_in);
+      	  sub_tuple = malloc(optlen);
 
-    	  sub_tuple->id = 0;
-    	  addr_ptr = (struct sockaddr_in*) &sub_tuple->addrs[0];
+      	  sub_tuple->id = 0;
+      	  addr_ptr = (struct sockaddr_in*) &sub_tuple->addrs[0];
 
-    	  addr_ptr->sin_family = AF_INET;
-    	  addr_ptr->sin_port = htons(conn->local_port);
-    	  memcpy(&addr_ptr->sin_addr, &addr->sin_addr, sizeof(struct in_addr));
+      	  addr_ptr->sin_family = AF_INET;
+      	  addr_ptr->sin_port = htons(conn->local_port);
+      	  memcpy(&addr_ptr->sin_addr, &addr->sin_addr, sizeof(struct in_addr));
 
-    	  addr_ptr++;
+      	  addr_ptr++;
 
-    	  struct sockaddr_in *remote_addr = (struct sockaddr_in *) conn->ip_addr->ai_addr;
+      	  struct sockaddr_in *remote_addr = (struct sockaddr_in *) conn->ip_addr->ai_addr;
 
-    	  addr_ptr->sin_family = AF_INET;
-    	  addr_ptr->sin_port = htons(conn->remote_port);
-    	  memcpy(&addr_ptr->sin_addr, &remote_addr->sin_addr, sizeof(struct in_addr));
+      	  addr_ptr->sin_family = AF_INET;
+      	  addr_ptr->sin_port = htons(conn->remote_port);
+      	  memcpy(&addr_ptr->sin_addr, &remote_addr->sin_addr, sizeof(struct in_addr));
 
 
-    	  error = getsockopt(sockfd, IPPROTO_TCP, MPTCP_OPEN_SUB_TUPLE,
-                           sub_tuple, &optlen);
-    	  if(error)
-    	    perror("MPTCP_OPEN_SUB_TUPLE");
+      	  error = getsockopt(sockfd, IPPROTO_TCP, MPTCP_OPEN_SUB_TUPLE,
+                             sub_tuple, &optlen);
+      	  if(error)
+      	    perror("MPTCP_OPEN_SUB_TUPLE");
+        }
       }
+      /*else if(ifa->ifa_addr->sa_family == AF_INET6) {
+        struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+        struct in6_addr linklocal, localhost;
+        inet_pton(AF_INET6, "fe80::", &linklocal);
+        inet_pton(AF_INET6, "::1", &localhost);
+        if(memcmp(&(addr6->sin6_addr), &linklocal, 2) == 0) {
+          printf("Found link-local addr\n");
+        }
+        else if(memcmp(&(addr6->sin6_addr), &localhost, 16) == 0) {
+          printf("Found localhost addr\n");
+        }
+        else { // candidate address
+          unsigned char straddr[64];
+          inet_ntop(AF_INET6, &(addr6->sin6_addr), &straddr, 64);
+          printf("Found candidate addr: %s\n", straddr);
+        }
+      }*/
     }
-    /*else if(ifa->ifa_addr->sa_family == AF_INET6) {
-      struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-      struct in6_addr linklocal, localhost;
-      inet_pton(AF_INET6, "fe80::", &linklocal);
-      inet_pton(AF_INET6, "::1", &localhost);
-      if(memcmp(&(addr6->sin6_addr), &linklocal, 2) == 0) {
-        printf("Found link-local addr\n");
-      }
-      else if(memcmp(&(addr6->sin6_addr), &localhost, 16) == 0) {
-        printf("Found localhost addr\n");
-      }
-      else { // candidate address
-        unsigned char straddr[64];
-        inet_ntop(AF_INET6, &(addr6->sin6_addr), &straddr, 64);
-        printf("Found candidate addr: %s\n", straddr);
-      }
-    }*/
   }
 #endif
 
