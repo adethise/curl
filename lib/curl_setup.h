@@ -762,4 +762,6 @@ endings either CRLF or LF so 't' is appropriate.
 #  endif
 # endif
 
+#define HAVE_MPTCP_CONTROL 1
+
 #endif /* HEADER_CURL_SETUP_H */

@@ -34,6 +34,7 @@
 #else
 #include <netinet/tcp.h> /* for TCP_NODELAY */
 #endif
+#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
