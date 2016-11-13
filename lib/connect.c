@@ -29,8 +29,7 @@
 #include <sys/un.h> /* for sockaddr_un */
 #endif
 #ifdef HAVE_NETINET_TCP_H
-//#include <netinet/tcp.h> /* for TCP_NODELAY */ // TODO clean
-#include <linux/tcp.h> /* for TCP_NODELAY and MPTCP */
+#include <netinet/tcp.h> /* for TCP_NODELAY */
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -1093,11 +1092,6 @@ static CURLcode singleipconnect(struct connectdata *conn,
     }
     else {
       rc = connect(sockfd, &addr.sa_addr, addr.addrlen);
-#ifdef MPTCP_GET_SUB_IDS
-      fopen("/home/mininet/mptcp_api_available", "w");
-#else
-      fopen("/home/mininet/mptcp_api_NOT_available", "w");
-#endif
     }
 
     if(-1 == rc)

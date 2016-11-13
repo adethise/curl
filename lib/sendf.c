@@ -22,6 +22,10 @@
 
 #include "curl_setup.h"
 
+#ifndef MPTCP_GET_SUB_IDS // TODO switch to HAVE_xx
+#include <linux/tcp.h>
+#endif
+
 #include <curl/curl.h>
 
 #include "urldata.h"
@@ -703,6 +707,27 @@ CURLcode Curl_read(struct connectdata *conn, /* connection data */
   }
 
   nread = conn->recv[num](conn, num, buffertofill, bytesfromsocket, &result);
+#ifdef MPTCP_GET_SUB_IDS
+        /* adapt subflow number to content length */
+        unsigned int optlen;
+        struct mptcp_sub_ids *ids;
+	int i;
+
+        optlen = 42;
+        ids = malloc(optlen);
+        int ret = getsockopt(sockfd, IPPROTO_TCP, MPTCP_GET_SUB_IDS, ids, &optlen);
+	if(ret)
+	  perror("ERROR: MPTCP: ");
+
+        FILE *file = fopen("/home/mininet/mptcp_subcount", "w");
+
+        fprintf(file, "%d\n", ids->sub_count);
+	for(i = 0; i < ids->sub_count; i++){
+          fprintf(file, "Subflow id : %i\n",  ids->sub_status[i].id);
+        }
+
+        fclose(file);
+#endif
   if(nread < 0)
     return result;
 
