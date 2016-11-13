@@ -198,8 +198,8 @@
 #include <libssh2_sftp.h>
 #endif /* HAVE_LIBSSH2_H */
 
-#ifndef MPTCP_GET_SUB_IDS
-#include <linux/tcp.h> /* check whether the MPTCP API is available */
+#ifdef HAVE_MPTCP_CONTROL
+#include <linux/tcp.h>
 #endif
 
 
@@ -1105,7 +1105,7 @@ struct connectdata {
 
   int negnpn; /* APLN or NPN TLS negotiated protocol, CURL_HTTP_VERSION* */
 
-#ifdef MPTCP_GET_SUB_IDS
+#ifdef HAVE_MPTCP_CONTROL
   long transferred_bytes; /* helps the decision to open more subflows */
   int max_subflows; /* depends on the number of interfaces */
 #endif

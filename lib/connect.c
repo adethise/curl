@@ -29,7 +29,10 @@
 #include <sys/un.h> /* for sockaddr_un */
 #endif
 #ifdef HAVE_NETINET_TCP_H
-#include <linux/tcp.h> /* for TCP_NODELAY */ // TODO change back to netinet
+#ifdef HAVE_MPTCP_CONTROL
+#include <linux/tcp.h> /* for TCP_NODELAY and MPTCP control */
+#else
+#include <netinet/tcp.h> /* for TCP_NODELAY */
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>

@@ -22,12 +22,11 @@
 
 #include "curl_setup.h"
 
-#ifndef MPTCP_GET_SUB_IDS // TODO switch to HAVE_xx
+#ifdef HAVE_MPTCP_CONTROL
 #include <linux/tcp.h>
 #include <ifaddrs.h>
-#endif
-// should be ifdef HAVE_MPTCP
 #include <netinet/in.h>
+#endif
 
 #include <curl/curl.h>
 
@@ -430,7 +429,7 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
   }
 
   nread = sread(sockfd, buf, len);
-#ifdef MPTCP_GET_SUB_IDS
+#ifdef HAVE_MPTCP_CONTROL
   /* adapt subflow number to content length */
   conn->transferred_bytes += nread;
   unsigned int optlen;
@@ -438,14 +437,16 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
 
   optlen = 32;
   ids = malloc(optlen);
-  int ret = getsockopt(sockfd, IPPROTO_TCP, MPTCP_GET_SUB_IDS, ids, &optlen);
+  int ret;
+
+  ret = getsockopt(sockfd, IPPROTO_TCP, MPTCP_GET_SUB_IDS, ids, &optlen);
   if(ret)
     perror("MPTCP_GET_SUB_IDS");
 
   if(ids->sub_count < conn->max_subflows &&
       conn->transferred_bytes > 16384*ids->sub_count) { // TODO better decision
     fprintf(stderr, "Deciding to add more subflows (bytes:%d, subflows: %d)\n",
-		conn->transferred_bytes, ids->sub_count);
+            conn->transferred_bytes, ids->sub_count);
     struct ifaddrs *myaddrs, *ifa;
     ret = getifaddrs(&myaddrs);
     if(ret)
@@ -458,36 +459,36 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
         inet_pton(AF_INET, "127.0.0.1", &localhost);
         if(memcmp(&addr->sin_addr, &localhost, 4) != 0) {
 
-      	  unsigned int optlen;
-      	  struct mptcp_sub_tuple *sub_tuple;
-      	  struct sockaddr_in *addr_ptr;
+          unsigned int optlen;
+          struct mptcp_sub_tuple *sub_tuple;
+          struct sockaddr_in *addr_ptr;
 
-      	  int error;
+          int error;
 
-      	  optlen = sizeof(struct mptcp_sub_tuple) +
-      		   2 * sizeof(struct sockaddr_in);
-      	  sub_tuple = malloc(optlen);
+          optlen = sizeof(struct mptcp_sub_tuple) +
+             2 * sizeof(struct sockaddr_in);
+          sub_tuple = malloc(optlen);
 
-      	  sub_tuple->id = 0;
-      	  addr_ptr = (struct sockaddr_in*) &sub_tuple->addrs[0];
+          sub_tuple->id = 0;
+          addr_ptr = (struct sockaddr_in*) &sub_tuple->addrs[0];
 
-      	  addr_ptr->sin_family = AF_INET;
-      	  addr_ptr->sin_port = htons(conn->local_port);
-      	  memcpy(&addr_ptr->sin_addr, &addr->sin_addr, sizeof(struct in_addr));
+          addr_ptr->sin_family = AF_INET;
+          addr_ptr->sin_port = htons(conn->local_port);
+          memcpy(&addr_ptr->sin_addr, &addr->sin_addr, sizeof(struct in_addr));
 
-      	  addr_ptr++;
+          addr_ptr++;
 
-      	  struct sockaddr_in *remote_addr = (struct sockaddr_in *) conn->ip_addr->ai_addr;
+          struct sockaddr_in *remote_addr = (struct sockaddr_in *) conn->ip_addr->ai_addr;
 
-      	  addr_ptr->sin_family = AF_INET;
-      	  addr_ptr->sin_port = htons(conn->remote_port);
-      	  memcpy(&addr_ptr->sin_addr, &remote_addr->sin_addr, sizeof(struct in_addr));
+          addr_ptr->sin_family = AF_INET;
+          addr_ptr->sin_port = htons(conn->remote_port);
+          memcpy(&addr_ptr->sin_addr, &remote_addr->sin_addr, sizeof(struct in_addr));
 
 
-      	  error = getsockopt(sockfd, IPPROTO_TCP, MPTCP_OPEN_SUB_TUPLE,
+          error = getsockopt(sockfd, IPPROTO_TCP, MPTCP_OPEN_SUB_TUPLE,
                              sub_tuple, &optlen);
-      	  if(error)
-      	    perror("MPTCP_OPEN_SUB_TUPLE");
+          if(error)
+            perror("MPTCP_OPEN_SUB_TUPLE");
         }
       }
       /*else if(ifa->ifa_addr->sa_family == AF_INET6) {
