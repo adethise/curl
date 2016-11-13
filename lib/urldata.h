@@ -1107,6 +1107,7 @@ struct connectdata {
 
 #ifdef MPTCP_GET_SUB_IDS
   long transferred_bytes; /* helps the decision to open more subflows */
+  int max_subflows; /* depends on the number of interfaces */
 #endif
 };
 

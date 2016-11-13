@@ -3956,6 +3956,26 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
   conn->fclosesocket = data->set.fclosesocket;
   conn->closesocket_client = data->set.closesocket_client;
 
+#ifdef MPTCP_GET_SUB_IDS
+  conn->transferred_bytes = 0;
+  conn->max_subflows = 0;
+
+  struct ifaddrs *myaddrs, *ifa;
+  ret = getifaddrs(&myaddrs);
+  if(ret)
+    perror("getifaddrs");
+
+  for(ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next) {
+    if(ifa->ifa_addr->sa_family == AF_INET) {
+      struct sockaddr_in *addr = (struct sockaddr_in *)ifa->ifa_addr;
+      struct in_addr localhost;
+      inet_pton(AF_INET, "127.0.0.1", &localhost);
+      if(memcmp(&addr->sin_addr, &localhost, 4) != 0) {
+        conn->max_subflows++;
+      }
+      // TODO add AF_INET6 family support for mptcp
+  }
+#endif
   return conn;
   error:
 
