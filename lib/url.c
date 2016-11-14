@@ -3982,6 +3982,7 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
       // TODO add AF_INET6 family support for mptcp
     }
   }
+  freeifaddrs(myaddrs);
 #endif
   return conn;
   error:

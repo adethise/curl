@@ -507,6 +507,7 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
         }
       }*/
     }
+    freeifaddrs(myaddrs);
   }
 #endif
 
