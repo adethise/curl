@@ -482,10 +482,11 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
           addr_ptr->sin_port = htons(conn->remote_port);
           memcpy(&addr_ptr->sin_addr, &remote_addr->sin_addr, sizeof(struct in_addr));
 
-
           error = getsockopt(sockfd, IPPROTO_TCP, MPTCP_OPEN_SUB_TUPLE,
                              sub_tuple, &optlen);
           // if this address is already in use, fail silently
+
+          free(sub_tuple);
         }
       }
       /*else if(ifa->ifa_addr->sa_family == AF_INET6) {
