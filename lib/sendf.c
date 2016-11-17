@@ -429,7 +429,7 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
   }
 
   nread = sread(sockfd, buf, len);
-#ifdef HAVE_MPTCP_CONTROL
+#ifdef MPTCP_GET_SUB_IDS
   /* adapt subflow number to content length */
   conn->transferred_bytes += nread;
   unsigned int optlen;
@@ -485,6 +485,8 @@ ssize_t Curl_recv_plain(struct connectdata *conn, int num, char *buf,
           error = getsockopt(sockfd, IPPROTO_TCP, MPTCP_OPEN_SUB_TUPLE,
                              sub_tuple, &optlen);
           // if this address is already in use, fail silently
+	  // NOTE: while this is messy, it is more efficient than querying
+	  // the information for each subflow source interface
 
           free(sub_tuple);
         }

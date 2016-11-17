@@ -1105,7 +1105,7 @@ struct connectdata {
 
   int negnpn; /* APLN or NPN TLS negotiated protocol, CURL_HTTP_VERSION* */
 
-#ifdef HAVE_MPTCP_CONTROL
+#ifdef MPTCP_GET_SUB_IDS
   long transferred_bytes; /* helps the decision to open more subflows */
   int max_subflows; /* depends on the number of interfaces */
 #endif

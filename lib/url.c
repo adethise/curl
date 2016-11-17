@@ -3962,7 +3962,7 @@ static struct connectdata *allocate_conn(struct Curl_easy *data)
   conn->fclosesocket = data->set.fclosesocket;
   conn->closesocket_client = data->set.closesocket_client;
 
-#ifdef HAVE_MPTCP_CONTROL
+#ifdef MPTCP_GET_SUB_IDS
   conn->transferred_bytes = 0;
   conn->max_subflows = 0;
 
